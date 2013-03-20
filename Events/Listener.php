@@ -7,8 +7,6 @@ interface Listener extends \ManiaLive\Event\Listener {
     /**
      * Callback for dedimania.OpenSession
      * 
-     * Return struct {'SessionId': string, 'Error': string}      
-     * If successful SessionId is the value to be used it other methods, if not it is empty and a message is in Error.
      */
     function onDedimaniaOpenSession();
 

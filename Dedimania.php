@@ -24,14 +24,24 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
 
     public function onInit() {
         $this->setVersion(0.1);
-        Dispatcher::register(DediEvent::getClass(), $this);
         $this->config = Config::getInstance();
+        Dispatcher::register(DediEvent::getClass(), $this);
+        $this->setPublicMethod("disableMessages");
+        $this->setPublicMethod("enableMessages");
     }
 
     public function onLoad() {
         $this->enableDedicatedEvents();
         $this->enableApplicationEvents();
         $this->dedimania = DediConnection::getInstance();
+    }
+
+    public function disableMessages($pluginId) {
+        $this->config->disableMessages = true;
+    }
+
+    public function enableMessages($pluginId) {
+        $this->config->disableMessages = false;
     }
 
     public function onReady() {
@@ -151,14 +161,19 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
 
     public function onEndMatch($rankings, $winnerTeamOrMap) {
         $this->rankings = $rankings;
+
         try {
+            if (sizeof($rankings) == 0) {
+                $this->vReplay = "";
+                $this->gReplay = "";
+                return;
+            }
             $this->vReplay = $this->connection->getValidationReplay($rankings[0]['Login']);
             $greplay = "";
             $grfile = sprintf('Dedimania/%s.%d.%07d.%s.Replay.Gbx', $this->storage->currentMap->uId, $this->storage->gameInfos->gameMode, $rankings[0]['BestTime'], $rankings[0]['Login']);
             $this->connection->SaveBestGhostsReplay($rankings[0]['Login'], $grfile);
             $this->gReplay = file_get_contents($this->connection->gameDataDirectory() . 'Replays/' . $grfile);
-        } catch (\Exception $e) {
-            echo "Error while generating replays: " . $e->getMessage();
+        } catch (\Exception $e) {            
             $this->vReplay = "";
             $this->gReplay = "";
         }

@@ -57,7 +57,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
         $this->dedimania->playerConnect($player, $isSpectator);
     }
 
-    public function onPlayerDisconnect($login) {
+    public function onPlayerDisconnect($login, $reason = null) {
         $this->dedimania->playerDisconnect($login);
     }
 

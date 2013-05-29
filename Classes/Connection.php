@@ -18,7 +18,7 @@ use ManiaLivePlugins\Reaby\Dedimania\Events\Event as dediEvent;
 class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickListener {
 
 // used for dedimania
-    private $version = 0.11;
+    private $version = 0.12;
 
     /** @var integer */
     static public $serverMaxRank = 30;
@@ -53,7 +53,7 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
 
         $this->webaccess = new \Webaccess();
 
-// if you are developing change port to 8081
+        // if you are developing change port to 8081
         $this->url = "http://dedimania.net:8081/Dedimania";
         $config = \ManiaLive\DedicatedApi\Config::getInstance();
         $this->connection = \DedicatedApi\Connection::factory($config->host, $config->port);
@@ -74,7 +74,7 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
         try {
             $this->webaccess->select($this->read, $this->write, $this->except, 0, 0);
 
-            if ($this->sessionId !== null && (time() - $this->lastUpdate) > 180) {
+            if ($this->sessionId !== null && (time() - $this->lastUpdate) > 240) {
                 echo "Dedimania connection keepalive!\n";
                 $this->updateServerPlayers($this->storage->currentMap);
                 $this->lastUpdate = time();
@@ -120,7 +120,7 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
                 "ServerVersion" => $version->version,
                 "ServerBuild" => $version->build,
                 "Path" => $serverInfo->path
-                ));
+        ));
 
         $request = new dediRequest("dedimania.OpenSession", $args);
         $this->send($request, array($this, "xOpenSession"));
@@ -142,9 +142,11 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
 // cup mode disabled
         if ($this->storage->gameInfos->gameMode == GameInfos::GAMEMODE_CUP)
             return;
-// special rounds mode disabled             
-        if ($this->storage->gameInfos->gameMode == GameInfos::GAMEMODE_ROUNDS && (!$map['LapRace'] || $map['LapRace'] && !empty($this->storage->gameInfos->roundsForcedLaps) && $this->storage->gameInfos->roundsForcedLaps != 0 ))
+// special rounds mode disabled          
+        if ($this->storage->gameInfos->gameMode == GameInfos::GAMEMODE_ROUNDS && (!isset($map['LapRace']) || $map['LapRace']) && $this->storage->gameInfos->roundsForcedLaps && $this->storage->gameInfos->roundsForcedLaps != 0) {
+            echo "Special rounds mode with forced laps ignored!";
             return;
+        }
 
 // only special maps under 8 seconds are allowed
         if ($map['AuthorTime'] < 8000 && strtolower($map['Author']) != 'nadeo')
@@ -193,6 +195,8 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
             $this->_getGameMode(),
             $times,
             $replays);
+
+        print_r($args);
 
         $request = new dediRequest("dedimania.SetChallengeTimes", $args);
         $this->send($request, array($this, "xSetChallengeTimes"));
@@ -441,12 +445,12 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
 
             // print_r($errors);
             // print "Actual Data\n";
-            
+
             $array = $msg->params[0];
             unset($array[count($array) - 1]);
 
 
-          //  print_r($array);
+            //  print_r($array);
 
             if (array_key_exists("faultString", $array[0])) {
                 $this->connection->chatSendServerMessage("Dedimania error: " . $array[0]['faultString']);
@@ -496,27 +500,28 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
 
         $this->dediRecords = array();
         $this->dediUid = null;
-
+        $this->dediBest = null;
+        
         if (!empty($data[0]['Error'])) {
             echo "Dedimania error: " . $data[0]['Error'];
             return;
         }
+
+
+        $this->dediUid = $data[0]['UId'];
+        $this->dediRecords = $data[0];
+        self::$serverMaxRank = $data[0]['ServerMaxRank'];
 
         if (!$data[0]['Records']) {
             echo "Dedimania: No records found.";
             return;
         }
 
-        $this->dediRecords = $data[0];
-        $this->dediUid = $data[0]['UId'];
-        self::$serverMaxRank = $data[0]['ServerMaxRank'];
-
-
-        if (!empty($data[0]['Records'][0]['Best'])) {
+        if (!empty($data[0]['Records'][0]['Best']))
             $this->dediBest = $data[0]['Records'][0]['Best'];
-        } else {
-            $this->dediBest = null;
-        }
+
+
+
 
         Dispatcher::dispatch(new dediEvent(dediEvent::ON_GET_RECORDS, $data[0]));
     }
@@ -526,7 +531,7 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
     }
 
     function xSetChallengeTimes($data) {
-// print_r($data);        
+//        print_r($data);
     }
 
     function xCheckSession($data) {

@@ -7,8 +7,12 @@ use ManiaLivePlugins\Reaby\Dedimania\Structures\Request;
 use ManiaLivePlugins\Reaby\Dedimania\Events\Event as DediEvent;
 use ManiaLivePlugins\Reaby\Dedimania\Config;
 use \ManiaLive\Event\Dispatcher;
+use \ManiaLive\Utilities\Console;
 
 class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlugins\Reaby\Dedimania\Events\Listener {
+
+    /** @var bool $debug */
+    private $enableDebug = true;
 
     /** @var DediConnection */
     private $dedimania;
@@ -72,6 +76,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
     public function onPlayerFinish($playerUid, $login, $time) {
         if ($time == 0)
             return;
+
         if ($this->storage->currentMap->nbCheckpoints == 0)
             return;
 
@@ -90,7 +95,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
         }
 
         if (!is_object($this->lastRecord)) {
-            echo "lastRecord not set";
+
             return;
         }
 
@@ -154,12 +159,31 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
                 });
     }
 
+    /**
+     * 
+     * @param type $rankings
+     * @param type $map
+     * @param type $wasWarmUp
+     * @param type $matchContinuesOnNextMap
+     * @param type $restartMap
+     */
     public function onEndMap($rankings, $map, $wasWarmUp, $matchContinuesOnNextMap, $restartMap) {
+        $this->debug("onEndMap");
+        $this->debug("vReplay:". sizeof($this->vReplay) . " --> gReplay:". sizeof($this->gReplay));
+        print_r($map);
         $this->dedimania->setChallengeTimes($map, $this->rankings, $this->vReplay, $this->gReplay);
         $this->dedimania->updateServerPlayers($map);
     }
 
+    /**
+     * 
+     * @param array $rankings
+     * @param string $winnerTeamOrMap
+     * 
+     */
     public function onEndMatch($rankings, $winnerTeamOrMap) {
+        $this->debug("onEndMatch");
+
         $this->rankings = $rankings;
 
         try {
@@ -173,7 +197,8 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
             $grfile = sprintf('Dedimania/%s.%d.%07d.%s.Replay.Gbx', $this->storage->currentMap->uId, $this->storage->gameInfos->gameMode, $rankings[0]['BestTime'], $rankings[0]['Login']);
             $this->connection->SaveBestGhostsReplay($rankings[0]['Login'], $grfile);
             $this->gReplay = file_get_contents($this->connection->gameDataDirectory() . 'Replays/' . $grfile);
-        } catch (\Exception $e) {            
+        } catch (\Exception $e) {
+            $this->debug("DedimaniaError:" . $e->getMessage());
             $this->vReplay = "";
             $this->gReplay = "";
         }
@@ -210,11 +235,17 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
         parent::onUnload();
     }
 
+    /**
+     * 
+     * @param type $data
+     */
     public function onDedimaniaUpdateRecords($data) {
         
     }
 
     /**
+     * onDedimaniaNewRecord($record)
+     * gets called on when player has driven a new record for the map
      * 
      * @param Structures\DediRecord $record     
      */
@@ -249,15 +280,15 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
     }
 
     public function onDedimaniaPlayerConnect($data) {
+        if ($this->config->disableMessages)
+            return;
+
         if ($data == null)
             return;
 
         if ($data['Banned']) {
             return;
         }
-
-        if ($this->config->disableMessages)
-            return;
 
         $player = $this->storage->getPlayerObject($data['Login']);
         $type = '$fffFree';
@@ -274,6 +305,11 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
 
     public function onDedimaniaPlayerDisconnect() {
         
+    }
+
+    public function debug($string) {
+        if ($this->enableDebug)
+            Console::println($string);
     }
 
 }

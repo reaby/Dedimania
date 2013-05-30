@@ -19,6 +19,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
 
     /** @var Config */
     private $config;
+    
     private $records = array();
     private $rankings = array();
     private $vReplay = "";
@@ -169,8 +170,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
      */
     public function onEndMap($rankings, $map, $wasWarmUp, $matchContinuesOnNextMap, $restartMap) {
         $this->debug("onEndMap");
-        $this->debug("vReplay:". sizeof($this->vReplay) . " --> gReplay:". sizeof($this->gReplay));
-        print_r($map);
+        $this->debug("vReplay:". sizeof($this->vReplay) . " --> gReplay:". sizeof($this->gReplay));        
         $this->dedimania->setChallengeTimes($map, $this->rankings, $this->vReplay, $this->gReplay);
         $this->dedimania->updateServerPlayers($map);
     }

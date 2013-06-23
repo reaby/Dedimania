@@ -8,14 +8,16 @@ class DediRecord extends \DedicatedApi\Structures\AbstractStructure {
     public $time;
     public $nickname;
     public $place = -1;
-    public $checkpoints = array();
+    public $checkpoints = "";
 
-    public function __construct($login, $nickname, $time, $place = -1, $checkpoints = array()) {
+    public function __construct($login, $nickname, $time, $place = -1, $checkpoints = "") {
         $this->login = $login;
         $this->time = $time;
         $this->nickname = $nickname;
         $this->place = $place;
         $this->checkpoints = $checkpoints;
+        if (is_array($checkpoints))
+            $this->checkpoints = implode(",", $checkpoints);
     }
 
 }

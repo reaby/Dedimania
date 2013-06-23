@@ -19,7 +19,6 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
 
     /** @var Config */
     private $config;
-    
     private $records = array();
     private $rankings = array();
     private $vReplay = "";
@@ -39,6 +38,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
         $this->enableDedicatedEvents();
         $this->enableApplicationEvents();
         $this->dedimania = DediConnection::getInstance();
+        $this->registerChatCommand("dedires", "reArrage");
     }
 
     public function disableMessages($pluginId) {
@@ -148,7 +148,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
         // recreate new records entry for update_records
         $data = array('Records' => array());
         foreach ($this->records as $record) {
-            $data['Records'][] = Array("Login" => $record->login, "NickName" => $record->nickname, "Best" => $record->time);
+            $data['Records'][] = Array("Login" => $record->login, "NickName" => $record->nickname, "Best" => $record->time, "Checks" => $record->checkpoints);
         }
 
         \ManiaLive\Event\Dispatcher::dispatch(new DediEvent(DediEvent::ON_UPDATE_RECORDS, $data));
@@ -170,7 +170,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
      */
     public function onEndMap($rankings, $map, $wasWarmUp, $matchContinuesOnNextMap, $restartMap) {
         $this->debug("onEndMap");
-        $this->debug("vReplay:". sizeof($this->vReplay) . " --> gReplay:". sizeof($this->gReplay));        
+        $this->debug("vReplay:" . sizeof($this->vReplay) . " --> gReplay:" . sizeof($this->gReplay));
         $this->dedimania->setChallengeTimes($map, $this->rankings, $this->vReplay, $this->gReplay);
         $this->dedimania->updateServerPlayers($map);
     }
@@ -224,7 +224,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
         $this->recordCount = $data['ServerMaxRank'];
 
         foreach ($data['Records'] as $record) {
-            $this->records[$record['Login']] = new Structures\DediRecord($record['Login'], $record['NickName'], $record['Best'], $record['Rank']);
+            $this->records[$record['Login']] = new Structures\DediRecord($record['Login'], $record['NickName'], $record['Best'], $record['Rank'], $record['Checks']);
         }
         $this->lastRecord = end($this->records);
     }

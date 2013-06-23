@@ -19,7 +19,6 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
 
     /** @var Config */
     private $config;
-    
     private $records = array();
     private $rankings = array();
     private $vReplay = "";
@@ -106,7 +105,8 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
             if (array_key_exists($login, $this->records)) {
                 if ($this->records[$login]->time > $time) {
                     $oldRecord = $this->records[$login];
-                    $this->records[$login] = new Structures\DediRecord($login, $player->nickName, $time);
+                    $bestCps = $this->connection->getCurrentRankingForLogin($login);
+                    $this->records[$login] = new Structures\DediRecord($login, $player->nickName, $time, $bestCps['BestCheckpoints']);
                     $this->reArrage();
                     if (array_key_exists($login, $this->records)) // have to recheck if the player is still at the dedi array
                         \ManiaLive\Event\Dispatcher::dispatch(new DediEvent(DediEvent::ON_DEDI_RECORD, $this->records[$login], $oldRecord));
@@ -148,7 +148,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
         // recreate new records entry for update_records
         $data = array('Records' => array());
         foreach ($this->records as $record) {
-            $data['Records'][] = Array("Login" => $record->login, "NickName" => $record->nickname, "Best" => $record->time);
+            $data['Records'][] = Array("Login" => $record->login, "NickName" => $record->nickname, "Best" => $record->time, "Checks" => implode(",", $record->checkpoints));
         }
 
         \ManiaLive\Event\Dispatcher::dispatch(new DediEvent(DediEvent::ON_UPDATE_RECORDS, $data));
@@ -170,7 +170,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
      */
     public function onEndMap($rankings, $map, $wasWarmUp, $matchContinuesOnNextMap, $restartMap) {
         $this->debug("onEndMap");
-        $this->debug("vReplay:". sizeof($this->vReplay) . " --> gReplay:". sizeof($this->gReplay));        
+        $this->debug("vReplay:" . sizeof($this->vReplay) . " --> gReplay:" . sizeof($this->gReplay));
         $this->dedimania->setChallengeTimes($map, $this->rankings, $this->vReplay, $this->gReplay);
         $this->dedimania->updateServerPlayers($map);
     }

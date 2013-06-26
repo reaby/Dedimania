@@ -78,7 +78,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
         if ($time == 0)
             return;
 
-        if ($this->storage->currentMap->nbCheckpoints == 0)
+        if ($this->storage->currentMap->nbCheckpoints == 1)
             return;
 
         if (!array_key_exists($login, DediConnection::$players))
@@ -169,7 +169,6 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
      * @param type $restartMap
      */
     public function onEndMap($rankings, $map, $wasWarmUp, $matchContinuesOnNextMap, $restartMap) {
-        $this->debug("onEndMap");
         $this->debug("vReplay:" . sizeof($this->vReplay) . " --> gReplay:" . sizeof($this->gReplay));
         $this->dedimania->setChallengeTimes($map, $this->rankings, $this->vReplay, $this->gReplay);
         $this->dedimania->updateServerPlayers($map);

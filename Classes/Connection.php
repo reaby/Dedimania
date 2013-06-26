@@ -17,7 +17,7 @@ use ManiaLivePlugins\Reaby\Dedimania\Events\Event as dediEvent;
 
 class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickListener {
 
-// used for dedimania
+    // used for dedimania
     private $version = 0.12;
 
     /** @var integer */
@@ -120,7 +120,7 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
                 "ServerVersion" => $version->version,
                 "ServerBuild" => $version->build,
                 "Path" => $serverInfo->path
-        ));
+                ));
 
         $request = new dediRequest("dedimania.OpenSession", $args);
         $this->send($request, array($this, "xOpenSession"));
@@ -195,7 +195,7 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
             $this->_getGameMode(),
             $times,
             $replays);
-        
+
         $request = new dediRequest("dedimania.SetChallengeTimes", $args);
         $this->send($request, array($this, "xSetChallengeTimes"));
     }
@@ -488,9 +488,14 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
     }
 
     function xOpenSession($data) {
-        $this->sessionId = $data[0][0]['SessionId'];
+        if (isset($data[0][0]['SessionId'])) {
+            $this->sessionId = $data[0][0]['SessionId'];
+            Console::println("[Dedimania] Authentication success to dedimania server!");
+            Dispatcher::dispatch(new dediEvent(dediEvent::ON_OPEN_SESSION, $this->sessionId));
+        } else {
+            Console::println("[Dedimania] Authentication to dedimania server failed!");
+        }
 //echo "recieved Session key:" . $this->sessionId . "\n";
-        Dispatcher::dispatch(new dediEvent(dediEvent::ON_OPEN_SESSION, $this->sessionId));
     }
 
     function xGetRecords($data) {
@@ -499,7 +504,7 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
         $this->dediRecords = array();
         $this->dediUid = null;
         $this->dediBest = null;
-        
+
         if (!empty($data[0]['Error'])) {
             echo "Dedimania error: " . $data[0]['Error'];
             return;
@@ -517,10 +522,7 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
 
         if (!empty($data[0]['Records'][0]['Best']))
             $this->dediBest = $data[0]['Records'][0]['Best'];
-
-
-
-
+        
         Dispatcher::dispatch(new dediEvent(dediEvent::ON_GET_RECORDS, $data[0]));
     }
 

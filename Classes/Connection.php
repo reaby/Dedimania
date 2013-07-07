@@ -107,6 +107,8 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
             case "TMCanyon":
                 $packmask = "Canyon";
                 break;
+            case "TMValley":
+                $packmask = "Valley";
         }
 
 
@@ -120,7 +122,7 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
                 "ServerVersion" => $version->version,
                 "ServerBuild" => $version->build,
                 "Path" => $serverInfo->path
-                ));
+        ));
 
         $request = new dediRequest("dedimania.OpenSession", $args);
         $this->send($request, array($this, "xOpenSession"));
@@ -522,7 +524,7 @@ class Connection extends \ManiaLib\Utils\Singleton implements AppListener, TickL
 
         if (!empty($data[0]['Records'][0]['Best']))
             $this->dediBest = $data[0]['Records'][0]['Best'];
-        
+
         Dispatcher::dispatch(new dediEvent(dediEvent::ON_GET_RECORDS, $data[0]));
     }
 

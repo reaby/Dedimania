@@ -37,8 +37,7 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
     public function onLoad() {
         $this->enableDedicatedEvents();
         $this->enableApplicationEvents();
-        $this->dedimania = DediConnection::getInstance();
-        $this->registerChatCommand("dedires", "reArrage");
+        $this->dedimania = DediConnection::getInstance();    
     }
 
     public function disableMessages($pluginId) {

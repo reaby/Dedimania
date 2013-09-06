@@ -100,10 +100,10 @@ class Dedimania extends \ManiaLive\PluginHandler\Plugin implements \ManiaLivePlu
         }
 
         // so if the time is better than the last entry or the count of records is less than 20...
-        if ($this->lastRecord->time > $time || count($this->records) < DediConnection::$serverMaxRank) {
+        if ($this->lastRecord->time >= $time || count($this->records) <= DediConnection::$serverMaxRank) {
             // if player exists on the list... see if he got better time
             if (array_key_exists($login, $this->records)) {
-                if ($this->records[$login]->time > $time) {
+                if ($this->records[$login]->time >= $time) {
                     $oldRecord = $this->records[$login];
                     $this->records[$login] = new Structures\DediRecord($login, $player->nickName, $time);
                     $this->reArrage();
